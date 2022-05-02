@@ -6,16 +6,52 @@ using Base64: stringmime
 
 # This might be the smallest core ever.
 
-mux(f) = f
-mux(m, f) = x -> m(f, x)
-mux(ms...) = foldr(mux, ms)
+mux(fn) = fn
+mux(prev, last) = x -> prev(last, x)  # prev is expected to call/return/operate on last(x)
+mux(parts...) = foldr(mux, parts)
+
+#= # Experiment 3: Generated function
+@generated function mux(parts...)
+    symb = gensym("request")
+    ex = :($(symb))
+    for fn in parts
+        ex = :($fn($ex))
+    end
+    return :(($symb -> $ex)())
+end
+=#
+
+#= Experiment 1,2: rewrite mux to trampoline: this is hard because
+- exceptions
+- intermediate fns are invoked, we can't change existing code (can we?)
+
+mux(parts...) = request -> begin
+    current = request
+    last = parts[end](current)
+    for next in parts[end-1:-1:1]
+        last = try
+            next(last, current)
+        catch e
+            e
+        end
+    end
+end
+=#
 
 stack(m) = m
-stack(m, n) = (f, x) -> m(mux(n, f), x)
-stack(ms...) = foldl(stack, ms)
+stack(m, parts) = function stackhelper(next, x)
+    m(mux(parts, next), x)
+end
+stack(parts...) = foldl(stack, parts)
 
-branch(p, t) = (f, x) -> (p(x) ? t : f)(x)
-branch(p, t...) = branch(p, mux(t...))
+branch(predicate, truefn) = function branchhelper(next, x)
+    if predicate(x)
+        truefn(x)
+    else
+        next(x)
+    end
+end
+branch(predicate, parts...) = branch(predicate, mux(parts...))
 
 # May as well provide a few conveniences, though.
 

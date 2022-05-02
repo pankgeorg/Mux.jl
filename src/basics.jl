@@ -5,8 +5,8 @@ export respond
 
 # Utils
 
-pre(f) = (app, req) -> app(f(req))
-post(f) = (app, req) -> f(app(req))
+pre(f) = (next, req) -> next(f(req))
+post(f) = (next, req) -> f(next(req))
 
 # Request
 
@@ -22,13 +22,13 @@ function todict(req::Request)
   return req′
 end
 
-todict(app, req) = app(todict(req))
+todict(next, req) = next(todict(req))
 
-function splitquery(app, req)
+function splitquery(next, req)
   uri = req[:uri]
   req[:path] = splitpath(uri.path)
   req[:query] = uri.query
-  app(req)
+  next(req)
 end
 
 params!(req) = get!(req, :params, d())

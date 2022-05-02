@@ -37,7 +37,7 @@ end
     @test String(HTTP.get("http://localhost:8000/user/julia").body) ==
                 "<h1>Hello, julia!</h1>"
   end
-
+#=
   @testset "query" begin
     @test String(HTTP.get("http://localhost:8000/dum?one=1&two=2").body) ==
                 "<h1>query1</h1>"
@@ -52,8 +52,9 @@ end
     @test_throws StatusError String(HTTP.get("http://localhost:8000/dum?one=1").body)
     @test_throws StatusError String(HTTP.get("http://localhost:8000/dum?one=1&two=2&sarv=boo").body)
   end
+  =#
 end
-
+#=
 
 @testset "MIME types" begin
   # Issue #68
@@ -166,5 +167,5 @@ end
     @test String(data) == message
   end
 end
-
+=#
 end
