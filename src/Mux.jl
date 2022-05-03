@@ -20,6 +20,20 @@ mux(parts...) = foldr(mux, parts)
     return :(($symb -> $ex)())
 end
 =#
+function run_trampoline(func)
+    while func isa Function
+        func = func()
+    end
+    func
+end
+
+fact(n) = run_trampoline(fact(n, 1))
+function fact(n, total)
+    n == 0 && return total
+    return ()-> fact(n - 1, n * total)
+end
+
+println(fact(5))
 
 #= Experiment 1,2: rewrite mux to trampoline: this is hard because
 - exceptions
@@ -44,11 +58,11 @@ stack(m, parts) = function stackhelper(next, x)
 end
 stack(parts...) = foldl(stack, parts)
 
-branch(predicate, truefn) = function branchhelper(next, x)
-    if predicate(x)
-        truefn(x)
+branch(predicate, dofn) = function branchhelper(chain, req)
+    if predicate(req)
+        dofn(req)
     else
-        next(x)
+        chain(req)
     end
 end
 branch(predicate, parts...) = branch(predicate, mux(parts...))
